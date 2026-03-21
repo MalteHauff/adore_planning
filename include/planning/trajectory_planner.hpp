@@ -54,7 +54,7 @@ public:
   void set_parameters( const std::map<std::string, double>& params );
   void set_vehicle_parameters( const dynamics::PhysicalVehicleParameters& params );
   void set_comfort_settings( const std::shared_ptr<dynamics::ComfortSettings>& settings );
-
+  //void set_headway_scale(double s);
 private:
 
   struct SolverParams
@@ -78,6 +78,7 @@ private:
   double dt              = 0.1;
   size_t horizon_steps   = 40;
   double ref_traj_length = 100;
+  double headway_scale      = 1.0;
 
   std::shared_ptr<mas::OCP> problem;
   dynamics::Trajectory      reference_trajectory; // Reference trajectory for the planner

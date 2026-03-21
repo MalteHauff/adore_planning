@@ -91,8 +91,9 @@ SpeedProfile::generate_from_route_and_participants( const map::Route& route, con
 
   auto prev_it = it;
   ++it;
-
-  safety_distance = comfort_settings->distance_headway + vehicle_params.wheelbase + vehicle_params.front_axle_to_front_border;
+  
+  //safety_distance = comfort_settings->distance_headway + vehicle_params.wheelbase + vehicle_params.front_axle_to_front_border;
+  safety_distance = comfort_settings->distance_headway_eff() + vehicle_params.wheelbase + vehicle_params.front_axle_to_front_border;
   max_acc         = comfort_settings->max_acceleration;
   max_decel       = -comfort_settings->min_acceleration;
 
@@ -114,7 +115,7 @@ SpeedProfile::backward_pass( MapPointIter& previous_it, const adore::map::Route&
     double s_curr  = current_it->first;
     double delta_s = s_curr - s_prev;
 
-    double idm_acc = idm::calculate_idm_acc( length, length, s_to_speed[s_prev], comfort_settings->time_headway, safety_distance,
+    double idm_acc = idm::calculate_idm_acc( length, length, s_to_speed[s_prev], comfort_settings->time_headway_eff(), safety_distance,
                                              s_to_speed[s_curr], max_decel, 0.0 );
     idm_acc        = std::clamp( idm_acc, -max_acc, max_decel );
 
@@ -199,7 +200,7 @@ SpeedProfile::forward_pass( MapPointIter& it, MapPointIter& end_it, MapPointIter
 
     double desired_speed = std::min( { max_curvature_speed, max_legal_speed } );
 
-    double idm_acc = idm::calculate_idm_acc( route.get_length() - s_curr, object_distance, desired_speed, comfort_settings->time_headway,
+    double idm_acc = idm::calculate_idm_acc( route.get_length() - s_curr, object_distance, desired_speed, comfort_settings->time_headway_eff(),
                                              safety_distance, s_to_speed[s_prev], max_acc, object_speed );
     idm_acc        = std::clamp( idm_acc, -max_decel, max_acc );
 

@@ -64,6 +64,12 @@ TrajectoryPlanner::set_comfort_settings( const std::shared_ptr<dynamics::Comfort
   comfort_settings->clamp( vehicle_params );
 }
 
+/*void
+TrajectoryPlanner::set_headway_scale(double s) {
+  headway_scale = std::max(0.1, s);
+}
+*/
+
 void
 TrajectoryPlanner::set_vehicle_parameters( const dynamics::PhysicalVehicleParameters& params )
 {
@@ -123,6 +129,7 @@ TrajectoryPlanner::plan_route_trajectory( const map::Route& latest_route, const 
   SpeedProfile speed_profile;
   speed_profile.set_vehicle_parameters( vehicle_params );
   speed_profile.set_comfort_settings( comfort_settings );
+  //speed_profile.set_headway_scale( headway_scale );
 
   speed_profile.generate_from_route_and_participants( latest_route, traffic_participants, current_state.vx, initial_s, current_state.time,
                                                       ref_traj_length );

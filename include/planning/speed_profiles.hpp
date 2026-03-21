@@ -92,6 +92,8 @@ private:
 
 
   // default values overritten by comfort settings
+  //double headway_scale = 1.0;
+  //double time_headway_eff = 0.0;
   double max_acc         = 2.0;  // [m/s^2] maximum acceleration
   double max_decel       = -2.0; // [m/s^2]
   double safety_distance = 3.0;  // [m] safety distance to the nearest object
