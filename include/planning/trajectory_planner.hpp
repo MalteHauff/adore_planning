@@ -47,14 +47,18 @@ public:
   dynamics::Trajectory plan_route_trajectory( const map::Route& latest_route, const dynamics::VehicleStateDynamic& current_state,
                                               const dynamics::TrafficParticipantSet& traffic_participants );
 
+  dynamics::Trajectory plan_route_trajectory_with_custom_comfort_settings( const map::Route& latest_route, const dynamics::VehicleStateDynamic& current_state,
+                                            const dynamics::TrafficParticipantSet& traffic_participants, const dynamics::ComfortSettings custom_comfort_settings );
+
   dynamics::Trajectory optimize_trajectory( const dynamics::VehicleStateDynamic& current_state,
                                             const dynamics::Trajectory&          reference_trajectory,
                                             const dynamics::Trajectory&          initial_guess = dynamics::Trajectory() );
 
   void set_parameters( const std::map<std::string, double>& params );
   void set_vehicle_parameters( const dynamics::PhysicalVehicleParameters& params );
-  void set_comfort_settings( const std::shared_ptr<dynamics::ComfortSettings>& settings );
-  //void set_headway_scale(double s);
+  void set_comfort_settings( const dynamics::ComfortSettings& settings );
+  dynamics::PhysicalVehicleParameters get_physical_vehicle_parameters();
+
 private:
 
   struct SolverParams
@@ -87,7 +91,7 @@ private:
   dynamics::VehicleStateDynamic start_state; // Current state of the vehicle
 
   dynamics::PhysicalVehicleParameters        vehicle_params;
-  std::shared_ptr<dynamics::ComfortSettings> comfort_settings;
+  dynamics::ComfortSettings comfort_settings;
 
 
   void                   setup_problem();
