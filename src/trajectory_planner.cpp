@@ -144,7 +144,11 @@ TrajectoryPlanner::plan_route_trajectory_with_custom_comfort_settings( const map
 
   SpeedProfile speed_profile;
   speed_profile.set_vehicle_parameters( vehicle_params );
-  speed_profile.set_comfort_settings( comfort_settings );
+  //speed_profile.set_comfort_settings( comfort_settings );
+  auto effective_comfort_settings = custom_comfort_settings;
+  effective_comfort_settings.clamp(vehicle_params);
+
+  speed_profile.set_comfort_settings(effective_comfort_settings);
   //speed_profile.set_headway_scale( headway_scale );
 
   speed_profile.generate_from_route_and_participants( latest_route, traffic_participants, current_state.vx, initial_s, current_state.time,

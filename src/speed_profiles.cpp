@@ -82,11 +82,10 @@ SpeedProfile::generate_from_route_and_participants( const map::Route& route, con
 
   auto prev_it = it;
   ++it;
-  
-  //safety_distance = comfort_settings->distance_headway + vehicle_params.wheelbase + vehicle_params.front_axle_to_front_border;
-  safety_distance = comfort_settings->distance_headway_eff() + vehicle_params.wheelbase + vehicle_params.front_axle_to_front_border;
-  max_acc         = comfort_settings->max_acceleration;
-  max_decel       = -comfort_settings->min_acceleration;
+
+  safety_distance = comfort_settings.distance_headway + vehicle_params.wheelbase + vehicle_params.front_axle_to_front_border;
+  max_acc         = comfort_settings.max_acceleration;
+  max_decel       = -comfort_settings.min_acceleration;
 
   forward_pass( it, end_it, prev_it, s_to_curvature, route, traffic_participants, initial_time );
 
@@ -201,9 +200,6 @@ SpeedProfile::backward_pass( MapPointIter& previous_it, const adore::map::Route&
 
     double delta_s = s_curr - s_prev;
 
-    double idm_acc = idm::calculate_idm_acc( length, length, s_to_speed[s_prev], comfort_settings->time_headway_eff(), safety_distance,
-                                             s_to_speed[s_curr], max_decel, 0.0 );
-    idm_acc        = std::clamp( idm_acc, -max_acc, max_decel );
     double braking_speed = std::sqrt( s_to_speed[s_curr] * s_to_speed[s_curr] + 2.0 * max_decel * delta_s );
 
     if( s_to_speed[s_prev] > braking_speed )
@@ -217,89 +213,6 @@ SpeedProfile::backward_pass( MapPointIter& previous_it, const adore::map::Route&
 
     --current_it;
     --previous_it;
-  }
-}
-
-void
-SpeedProfile::forward_pass( MapPointIter& it, MapPointIter& end_it, MapPointIter& prev_it, std::map<double, double>& s_to_curvature,
-                            const adore::map::Route& route, const dynamics::TrafficParticipantSet& traffic_participants,
-                            double initial_time )
-{
-  bool stop = false;
-
-  auto get_nearest_object_info_at_time = [&]( double s_curr, double time ) {
-    double object_distance = std::numeric_limits<double>::max();
-    double object_speed    = 0.0;
-
-    for( const auto& [id, participant] : traffic_participants.participants )
-    {
-
-      auto state = participant.state;
-      if( participant.trajectory.has_value() )
-      {
-        const auto& traj = participant.trajectory.value();
-        state            = traj.get_state_at_time( time );
-      }
-
-      double obj_s  = route.get_s( state );
-      double offset = adore::math::distance_2d( state, route.get_pose_at_s( obj_s ) );
-
-      if( offset > 4.0 )
-        continue;
-
-      if( obj_s > s_curr )
-      {
-        double distance = obj_s - s_curr;
-        if( distance < object_distance )
-        {
-          object_distance = distance;
-          object_speed    = state.vx;
-        }
-      }
-    }
-    return std::make_pair( object_distance, object_speed );
-  };
-
-  double time = initial_time;
-
-  for( ; it != end_it; ++it, ++prev_it )
-  {
-    double s_prev                        = prev_it->first;
-    double s_curr                        = it->first;
-    double delta_s                       = s_curr - s_prev;
-    auto [object_distance, object_speed] = get_nearest_object_info_at_time( s_curr, time );
-    if( object_distance < safety_distance )
-      stop = true;
-    if( stop )
-    {
-      s_to_speed[s_curr] = 0.0;
-      continue;
-    }
-
-    double max_curvature_speed  = s_to_curvature.lower_bound( s_curr )->second;
-    double max_legal_speed      = it->second.max_speed ? *it->second.max_speed : comfort_settings->max_speed;
-    max_legal_speed            *= comfort_settings->speed_fraction_of_limit;
-    double max_reachable_speed  = std::sqrt( s_to_speed[s_prev] * s_to_speed[s_prev] + 2 * max_acc * delta_s );
-
-    double desired_speed = std::min( { max_curvature_speed, max_legal_speed } );
-
-    double idm_acc = idm::calculate_idm_acc( route.get_length() - s_curr, object_distance, desired_speed, comfort_settings->time_headway_eff(),
-                                             safety_distance, s_to_speed[s_prev], max_acc, object_speed );
-    idm_acc        = std::clamp( idm_acc, -max_decel, max_acc );
-
-    // Compute speed limits
-    double idm_speed = std::sqrt( s_to_speed[s_prev] * s_to_speed[s_prev] + 2 * idm_acc * delta_s );
-
-    if( !std::isfinite( idm_speed ) )
-    {
-      idm_speed = 0.0;
-    }
-
-    s_to_speed[s_curr]  = idm_speed;
-    s_to_acc[s_curr]    = idm_acc;
-    time               += delta_s / idm_speed;
-    if( idm_speed == 0.0 )
-      stop = true;
   }
 }
 
